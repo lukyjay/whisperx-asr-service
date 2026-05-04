@@ -9,8 +9,9 @@ env:
   DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/whisperx-asr-service
 
 jobs:
-  build-and-push:
+  build-default:
     runs-on: ubuntu-latest
+    name: Build default image (torch 2.7.1, cu121)
 
     steps:
       - name: Checkout code
@@ -64,8 +65,11 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: |
+            TORCH_VERSION=2.7.1
+            TORCH_INDEX_URL=https://download.pytorch.org/whl/cu121
+          cache-from: type=gha,scope=default
+          cache-to: type=gha,mode=max,scope=default
           platforms: linux/amd64
 
       - name: Update Docker Hub description
@@ -76,3 +80,67 @@ jobs:
           repository: ${{ env.DOCKER_IMAGE }}
           short-description: "WhisperX ASR API Service - Speech Recognition with Speaker Diarization"
           readme-filepath: ./README.md
+
+  build-blackwell:
+    runs-on: ubuntu-latest
+    name: Build Blackwell image (torch 2.8.0, cu128)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          FILE_VERSION=$(python3 -c "exec(open('app/version.py').read()); print(__version__)")
+          if [ "$TAG_VERSION" != "$FILE_VERSION" ]; then
+            echo "::error::Version mismatch: tag is v${TAG_VERSION} but app/version.py has ${FILE_VERSION}"
+            exit 1
+          fi
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (Blackwell)
+        id: meta-blackwell
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE }}
+          flavor: |
+            latest=false
+            suffix=-blackwell,onlatest=true
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=blackwell,enable={{is_default_branch}}
+
+      - name: Build and push Docker image (Blackwell)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta-blackwell.outputs.tags }}
+          labels: ${{ steps.meta-blackwell.outputs.labels }}
+          build-args: |
+            TORCH_VERSION=2.8.0
+            TORCH_INDEX_URL=https://download.pytorch.org/whl/cu128
+          cache-from: type=gha,scope=blackwell
+          cache-to: type=gha,mode=max,scope=blackwell
+          platforms: linux/amd64
