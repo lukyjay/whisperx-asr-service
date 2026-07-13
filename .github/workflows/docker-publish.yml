@@ -128,7 +128,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=raw,value=blackwell,enable={{is_default_branch}}
+            type=raw,value=blackwell
 
       - name: Build and push Docker image (Blackwell)
         uses: docker/build-push-action@v7
