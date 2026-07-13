@@ -21,6 +21,9 @@ services:
       - "9000:9000"
       - "${RAY_DASHBOARD_PORT:-8265}:8265"  # Ray dashboard (only used in ray mode)
 
+    env_file:
+      - .env
+
     # Ray uses /dev/shm for object store
     shm_size: '8g'
 
