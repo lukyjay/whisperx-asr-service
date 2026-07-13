@@ -13,10 +13,10 @@ A simple ASR API service powered by WhisperX for transcription with speaker diar
 
 > **v0.3.2: two Docker image variants are now published per release.**
 >
-> | Your GPU | Pull this tag |
+> | Device | Pull this tag |
 > |----------|---------------|
-> | **RTX 50xx (Blackwell)** | `learnedmachine/whisperx-asr-service:blackwell` (PyTorch 2.8.0 / cu128) |
-> | Anything else (10xx, 20xx, 30xx, 40xx, A-series, H-series) | `learnedmachine/whisperx-asr-service:latest` (PyTorch 2.7.1 / cu126) |
+> | **RTX 50xx GPU (Blackwell)** | `learnedmachine/whisperx-asr-service:blackwell` (PyTorch 2.8.0 / cu128) |
+> | CPU or non-Blackwell Cuda GPU (10xx, 20xx, 30xx, 40xx, A-series, H-series) | `learnedmachine/whisperx-asr-service:latest` (PyTorch 2.7.1 / cu126) |
 >
 > The `:latest` tag was previously broken on Pascal cards. v0.3.2 fixes this by re-pinning torch after the WhisperX install. See [Image Variants](#image-variants) and [Changelog](#changelog).
 
@@ -32,7 +32,7 @@ A simple ASR API service powered by WhisperX for transcription with speaker diar
 ## Limitations
 
 - **Not production-grade**: Basic error handling, no authentication
-- **GPU required**: Needs NVIDIA GPU with 14GB+ VRAM for large models
+- **GPU acceleration**: Requires an NVIDIA GPU with sufficient VRAM for larger models
 - **File size limits**: Large audio files (>1GB) can cause out-of-memory errors
 - **VRAM usage**: Memory consumption increases with file size and diarization
 - **Alpha software**: Expect bugs and breaking changes
